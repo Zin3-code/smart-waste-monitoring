@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Navigation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .debug-section {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .debug-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .debug-btn:hover {
+            background-color: #0056b3;
+        }
+        .output {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Navigation</h1>
+    <p>This page helps debug navigation to different sections of the admin dashboard.</p>
+
+    <div class="debug-section">
+        <h2>Navigation Test</h2>
+        <button class="debug-btn" onclick="navigateTo('overview')">Overview</button>
+        <button class="debug-btn" onclick="navigateTo('bins')">Smart Bins</button>
+        <button class="debug-btn" onclick="navigateTo('tasks')">Tasks</button>
+        <button class="debug-btn" onclick="navigateTo('messages')">Messages</button>
+        <button class="debug-btn" onclick="navigateTo('users')">Users</button>
+        <button class="debug-btn" onclick="navigateTo('reports')">Reports</button>
+        <button class="debug-btn" onclick="navigateTo('settings')">Settings</button>
+    </div>
+
+    <div class="debug-section">
+        <h2>Debug Output</h2>
+        <div class="output" id="output"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.textContent += new Date().toISOString() + ': ' + message + '\n';
+            console.log(message);
+        }
+
+        function navigateTo(section) {
+            log('Navigating to: ' + section);
+            
+            try {
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                const targetLink = document.querySelector(`.nav-link[data-section="${section}"]`);
+                if (targetLink) {
+                    targetLink.classList.add('active');
+                    log('Updated active nav link');
+                } else {
+                    log('Warning: Nav link for section ' + section + ' not found');
+                }
+                
+                // Show section
+                document.querySelectorAll('.section').forEach(sec => {
+                    sec.classList.remove('active');
+                });
+                
+                const targetSection = document.getElementById(`${section}Section`);
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                    log('Updated section visibility');
+                } else {
+                    log('Warning: Section ' + section + ' not found');
+                }
+                
+                // Update page title
+                if (targetLink) {
+                    document.getElementById('pageTitle').textContent = targetLink.textContent.trim();
+                    log('Updated page title');
+                }
+                
+                log('Navigation to ' + section + ' completed');
+            } catch (error) {
+                log('Error during navigation: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        function testNavigation() {
+            log('=== Navigation Test Started ===');
+            const sections = ['overview', 'bins', 'tasks', 'messages', 'users', 'reports', 'settings'];
+            
+            // Test each section
+            sections.forEach((section, index) => {
+                setTimeout(() => {
+                    navigateTo(section);
+                }, index * 2000); // Wait 2 seconds between tests
+            });
+        }
+    </script>
+</body>
+</html>

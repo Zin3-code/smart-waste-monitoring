@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Waste Monitoring - Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen hidden">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🗑️ Smart Waste Monitoring</h1>
+                <p>Admin Dashboard - Cantilan Urban Areas</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <p id="loginError" class="error-message"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🗑️ Admin Panel</h2>
+                <p id="userName">Welcome, Admin</p>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-link" data-section="overview">
+                    <span class="icon">📊</span> Overview
+                </a>
+                <a href="#" class="nav-link active" data-section="bins">
+                    <span class="icon">🗑️</span> Smart Bins
+                </a>
+                <a href="#" class="nav-link" data-section="tasks">
+                    <span class="icon">📋</span> Tasks
+                </a>
+                <a href="#" class="nav-link" data-section="messages">
+                    <span class="icon">💬</span> Messages
+                    <span id="messageBadge" class="badge hidden">0</span>
+                </a>
+                <a href="#" class="nav-link" data-section="users">
+                    <span class="icon">👥</span> Users
+                </a>
+                <a href="#" class="nav-link" data-section="reports">
+                    <span class="icon">📈</span> Reports
+                </a>
+                <a href="#" class="nav-link" data-section="settings">
+                    <span class="icon">⚙️</span> Settings
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <h1 id="pageTitle">Smart Bins</h1>
+                <div class="header-actions">
+                    <div class="notification-menu" id="notificationMenu">
+                        <button id="notificationToggle" class="notification-bell" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="notificationDropdown">
+                            <span class="icon">&#128276;</span>
+                            <span id="notificationCount" class="notification-count hidden">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="notification-dropdown hidden" aria-label="Notifications">
+                            <div class="notification-header">
+                                <span>Notifications</span>
+                                <button id="notificationMarkAll" class="notification-action" type="button">Mark all read</button>
+                            </div>
+                            <div id="notificationList" class="notification-list"></div>
+                            <button id="notificationViewAll" class="notification-view" type="button">View all messages</button>
+                        </div>
+                    </div>
+                    <span id="currentTime" class="current-time"></span>
+                    <div class="profile-menu" id="profileMenu">
+                        <button id="profileToggle" class="profile-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="profileDropdown">
+                            <span id="profileAvatar" class="profile-avatar">
+                                <img id="profilePhotoSmall" alt="Profile photo">
+                                <span id="profileInitials" class="profile-initials">AU</span>
+                            </span>
+                            <span class="profile-labels">
+                                <span id="profileName" class="profile-name">Admin User</span>
+                                <span id="profileRole" class="profile-role">Administrator</span>
+                            </span>
+                            <span class="profile-caret" aria-hidden="true">&#9662;</span>
+                        </button>
+                        <div id="profileDropdown" class="profile-dropdown hidden" aria-label="Profile menu">
+                            <div class="profile-summary">
+                                <span id="profileAvatarLarge" class="profile-avatar large">
+                                    <img id="profilePhotoLarge" alt="Profile photo">
+                                    <span id="profileInitialsLarge" class="profile-initials">AU</span>
+                                </span>
+                                <div class="profile-details">
+                                    <div id="profileDropdownName" class="profile-dropdown-name">Admin User</div>
+                                    <div id="profileEmail" class="profile-email">admin@example.com</div>
+                                    <div id="profileAbout" class="profile-about">No bio added</div>
+                                </div>
+                            </div>
+                            <div class="profile-actions">
+                                <button id="profileEditBtn" class="profile-action" type="button">Edit Profile</button>
+                                <button id="profileSettingsBtn" class="profile-action" type="button">Settings</button>
+                                <button id="profileLogoutBtn" class="profile-action danger" type="button">Logout</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Overview Section -->
+            <section id="overviewSection" class="section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🗑️</div>
+                        <div class="stat-content">
+                            <h3 id="totalBins">0</h3>
+                            <p>Total Bins</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🟢</div>
+                        <div class="stat-content">
+                            <h3 id="onlineBins">0</h3>
+                            <p>Online Bins</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔴</div>
+                        <div class="stat-content">
+                            <h3 id="fullBins">0</h3>
+                            <p>Full Bins</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-content">
+                            <h3 id="pendingTasks">0</h3>
+                            <p>Pending Tasks</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Bin Status Distribution</h3>
+                        <canvas id="binStatusChart" role="img" aria-label="Bin status distribution chart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Task Completion Rate</h3>
+                        <canvas id="taskCompletionChart" role="img" aria-label="Task completion rate chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div id="recentActivityList" class="activity-list"></div>
+                </div>
+            </section>
+
+            <!-- Bins Section -->
+            <section id="binsSection" class="section active">
+                <div class="section-header">
+                    <h2>Smart Bins</h2>
+                    <button id="addBinBtn" class="btn btn-primary">+ Add Bin</button>
+                </div>
+                <div class="filters">
+                    <select id="binStatusFilter" class="filter-select" aria-label="Bin status filter" title="Bin status filter">
+                        <option value="">All Status</option>
+                        <option value="empty">Empty</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="near-full">Near Full</option>
+                        <option value="full">Full</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                    <select id="binAreaFilter" class="filter-select" aria-label="Bin area filter" title="Bin area filter">
+                        <option value="">All Areas</option>
+                    </select>
+                </div>
+                <div id="binsGrid" class="bins-grid"></div>
+            </section>
+
+            <!-- Tasks Section -->
+            <section id="tasksSection" class="section">
+                <div class="section-header">
+                    <h2>Collection Tasks</h2>
+                    <button id="createTaskBtn" class="btn btn-primary">+ Create Task</button>
+                </div>
+                <div class="filters">
+                    <select id="taskStatusFilter" class="filter-select" aria-label="Task status filter" title="Task status filter">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <select id="taskPriorityFilter" class="filter-select" aria-label="Task priority filter" title="Task priority filter">
+                        <option value="">All Priority</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div id="tasksTable" class="tasks-table"></div>
+            </section>
+
+            <!-- Messages Section -->
+            <section id="messagesSection" class="section">
+                <div class="section-header">
+                    <h2>GSM Messages</h2>
+                    <button id="markAllReadBtn" class="btn btn-secondary">Mark All Read</button>
+                </div>
+                <div class="filters">
+                    <select id="messageTypeFilter" class="filter-select" aria-label="Message type filter" title="Message type filter">
+                        <option value="">All Types</option>
+                        <option value="alert">Alerts</option>
+                        <option value="update">Updates</option>
+                        <option value="issue">Issues</option>
+                        <option value="confirmation">Confirmations</option>
+                    </select>
+                    <select id="messageSenderFilter" class="filter-select" aria-label="Message sender filter" title="Message sender filter">
+                        <option value="">All Senders</option>
+                        <option value="bin">Bins</option>
+                        <option value="collector">Collectors</option>
+                    </select>
+                </div>
+                <div id="messagesList" class="messages-list"></div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="usersSection" class="section">
+                <div class="section-header">
+                    <h2>User Management</h2>
+                    <button id="addUserBtn" class="btn btn-primary">+ Add User</button>
+                </div>
+                <div class="filters">
+                    <select id="userRoleFilter" class="filter-select" aria-label="User role filter" title="User role filter">
+                        <option value="">All Roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="collector">Collector</option>
+                    </select>
+                </div>
+                <div id="usersTable" class="users-table"></div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reportsSection" class="section">
+                <div class="section-header">
+                    <h2>Reports & Analytics</h2>
+                    <button id="generateReportBtn" class="btn btn-primary">Generate Report</button>
+                </div>
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <h3>Collection Efficiency</h3>
+                        <canvas id="collectionEfficiencyChart" role="img" aria-label="Collection efficiency chart"></canvas>
+                    </div>
+                    <div class="report-card">
+                        <h3>Bin Fill Trends</h3>
+                        <canvas id="fillTrendsChart" role="img" aria-label="Bin fill trends chart"></canvas>
+                    </div>
+                    <div class="report-card">
+                        <h3>Collector Performance</h3>
+                        <canvas id="collectorPerformanceChart" role="img" aria-label="Collector performance chart"></canvas>
+                    </div>
+                    <div class="report-card">
+                        <h3>Alert Statistics</h3>
+                        <canvas id="alertStatsChart" role="img" aria-label="Alert statistics chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settingsSection" class="section">
+                <div class="section-header">
+                    <h2>System Settings</h2>
+                </div>
+                <div class="settings-container">
+                    <div class="setting-group">
+                        <h3>Threshold Settings</h3>
+                        <div class="form-group">
+                            <label for="nearFullThreshold">Near Full Threshold (%)</label>
+                            <input type="number" id="nearFullThreshold" value="75" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="fullThreshold">Full Threshold (%)</label>
+                            <input type="number" id="fullThreshold" value="90" min="0" max="100">
+                        </div>
+                        <button id="saveThresholdsBtn" class="btn btn-primary">Save Thresholds</button>
+                    </div>
+                    <div class="setting-group">
+                        <h3>System Information</h3>
+                        <div class="info-item">
+                            <span>Server Status:</span>
+                            <span class="status online">Online</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Database:</span>
+                            <span class="status online">Connected</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Version:</span>
+                            <span>1.0.0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalOverlay" class="modal-overlay hidden"></div>
+
+    <!-- Add Bin Modal -->
+    <div id="addBinModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Smart Bin</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="addBinForm" class="modal-body">
+                <div class="form-group">
+                    <label for="binName">Bin Name</label>
+                    <input type="text" id="binName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="binAddress">Address</label>
+                    <input type="text" id="binAddress" name="address" required>
+                </div>
+                <div class="form-group">
+                    <label for="binArea">Area</label>
+                    <input type="text" id="binArea" name="area" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="binLatitude">Latitude</label>
+                        <input type="number" step="any" id="binLatitude" name="latitude" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="binLongitude">Longitude</label>
+                        <input type="number" step="any" id="binLongitude" name="longitude" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="binGsmNumber">GSM Number</label>
+                    <input type="text" id="binGsmNumber" name="gsmNumber" required>
+                </div>
+                <div class="form-group">
+                    <label for="binDeviceId">Device ID (ESP32)</label>
+                    <input type="text" id="binDeviceId" name="deviceId" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Bin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Task Modal -->
+    <div id="createTaskModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Collection Task</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="createTaskForm" class="modal-body">
+                <div class="form-group">
+                    <label for="taskBin">Select Bin</label>
+                    <select id="taskBin" name="binId" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="taskCollector">Assign Collector</label>
+                    <select id="taskCollector" name="assignedTo" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="taskPriority">Priority</label>
+                    <select id="taskPriority" name="priority">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="taskInstructions">Instructions</label>
+                    <textarea id="taskInstructions" name="instructions" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="taskDuration">Estimated Duration (minutes)</label>
+                    <input type="number" id="taskDuration" name="estimatedDuration" value="30" min="5">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Details Modal -->
+    <div id="taskDetailsModal" class="modal hidden">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Task Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="taskDetailsContent"></div>
+        </div>
+    </div>
+
+    <!-- Profile Edit Modal -->
+    <div id="profileEditModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Profile</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="profileEditForm" class="modal-body">
+                <div class="form-group">
+                    <label>Profile Photo</label>
+                    <div class="profile-photo-field">
+                        <div class="profile-photo-preview" id="profilePhotoPreview">
+                            <img id="profilePhotoPreviewImg" alt="Profile preview">
+                            <span id="profilePhotoPreviewInitials" class="profile-initials">AU</span>
+                        </div>
+                        <input type="file" id="profilePhotoInput" name="profilePhoto" accept="image/*" title="Upload profile photo">
+                        <div class="profile-photo-actions">
+                            <button type="button" id="profilePhotoRemove" class="btn btn-secondary btn-sm">Remove Photo</button>
+                        </div>
+                        <span class="form-help-text">Use a JPG or PNG up to 2MB.</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="profileEditName">Name</label>
+                    <input type="text" id="profileEditName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="profileEditEmail">Email</label>
+                    <input type="email" id="profileEditEmail" name="email" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="profileEditPhone">Phone</label>
+                    <input type="text" id="profileEditPhone" name="phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="profileEditGsmNumber">GSM Number</label>
+                    <input type="text" id="profileEditGsmNumber" name="gsmNumber" required>
+                </div>
+                <div class="form-group">
+                    <label for="profileEditAbout">About</label>
+                    <textarea id="profileEditAbout" name="about" rows="3" maxlength="300" placeholder="Add a short bio..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New User</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="addUserForm" class="modal-body">
+                <div class="form-group">
+                    <label for="userName">Name</label>
+                    <input type="text" id="userName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email</label>
+                    <input type="email" id="userEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="userPassword">Password</label>
+                    <input type="password" id="userPassword" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="userRole">Role</label>
+                    <select id="userRole" name="role">
+                        <option value="collector">Collector</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="userPhone">Phone</label>
+                    <input type="text" id="userPhone" name="phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="userGsmNumber">GSM Number</label>
+                    <input type="text" id="userGsmNumber" name="gsmNumber" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bin Details Modal -->
+    <div id="binDetailsModal" class="modal hidden">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Bin Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="binDetailsContent"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        // Set the authentication token and user info directly in localStorage
+        const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2ZmYzQxYjgwMDAzYjNiNWJiODdiNSIsImlhdCI6MTc3MDAyODM4NiwiZXhwIjoxNzcwNjMzMTg2fQ.Qah4pvAEQ2T7NABARYG3As4bdrJEwIfn9JjRPVqKF1U';
+        const user = {
+            id: '697ffc41b80003b3b5bb87b5',
+            name: 'Admin User',
+            email: 'admin@example.com',
+            role: 'admin',
+            phone: '+1234567890',
+            gsmNumber: '+1234567890'
+        };
+        
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+    </script>
+    <script src="auth-gate.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

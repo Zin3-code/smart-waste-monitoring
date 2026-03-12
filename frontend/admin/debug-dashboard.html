@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="debugInfo">
+        <h2>Debug Info</h2>
+        <p>Token: <span id="tokenDisplay"></span></p>
+        <p>User: <span id="userDisplay"></span></p>
+    </div>
+    <script>
+        // Set the authentication token and user info directly in localStorage
+        const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5N2ZmYzQxYjgwMDAzYjNiNWJiODdiNSIsImlhdCI6MTc3MDAyODM4NiwiZXhwIjoxNzcwNjMzMTg2fQ.Qah4pvAEQ2T7NABARYG3As4bdrJEwIfn9JjRPVqKF1U';
+        const user = {
+            id: '697ffc41b80003b3b5bb87b5',
+            name: 'Admin User',
+            email: 'admin@example.com',
+            role: 'admin',
+            phone: '+1234567890',
+            gsmNumber: '+1234567890'
+        };
+        
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        // Display debug info
+        document.getElementById('tokenDisplay').textContent = token;
+        document.getElementById('userDisplay').textContent = JSON.stringify(user, null, 2);
+        
+        // Redirect to main dashboard after 2 seconds
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2000);
+    </script>
+</body>
+</html>

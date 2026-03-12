@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Listeners Debugger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .debug-panel {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .debug-panel button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .debug-panel button:hover {
+            background: #0056b3;
+        }
+        .debug-output {
+            background: #2d2d2d;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #00ff00;
+        }
+        .error {
+            color: #ff0000;
+        }
+        .warning {
+            color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <h1>Event Listeners Debugger</h1>
+    
+    <div class="debug-panel">
+        <button id="runDebug">Run Debug</button>
+        <button id="clearOutput">Clear Output</button>
+    </div>
+    
+    <div class="debug-output" id="debugOutput"></div>
+
+    <script>
+        const outputEl = document.getElementById('debugOutput');
+        const runBtn = document.getElementById('runDebug');
+        const clearBtn = document.getElementById('clearOutput');
+
+        // Override console.log to capture output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        function logToScreen(message, type = 'log') {
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const prefix = `[${timestamp}]`;
+            const colorClass = type === 'error' ? 'error' : type === 'warn' ? 'warning' : 'success';
+            outputEl.innerHTML += `<span class="${colorClass}">${prefix} ${message}</span>\n`;
+            outputEl.scrollTop = outputEl.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logToScreen(args.join(' '), 'log');
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            logToScreen(args.join(' '), 'error');
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            logToScreen(args.join(' '), 'warn');
+        };
+
+        clearBtn.addEventListener('click', () => {
+            outputEl.innerHTML = '';
+        });
+
+        runBtn.addEventListener('click', async () => {
+            runBtn.disabled = true;
+            runBtn.textContent = 'Debugging...';
+            outputEl.innerHTML = '';
+
+            try {
+                // List of elements to check
+                const elementsToCheck = [
+                    '#addBinBtn',
+                    '#addBinForm', 
+                    '#editBinForm',
+                    '#createTaskBtn',
+                    '#createTaskForm',
+                    '#addUserBtn',
+                    '#addUserForm',
+                    '#editUserForm',
+                    '#markAllReadBtn',
+                    '#saveThresholdsBtn',
+                    '#binStatusFilter',
+                    '#binAreaFilter',
+                    '#taskStatusFilter',
+                    '#taskPriorityFilter',
+                    '#messageTypeFilter',
+                    '#messageSenderFilter',
+                    '#userRoleFilter',
+                    '.nav-link'
+                ];
+
+                console.log('=== DEBUG EVENT LISTENERS ===');
+
+                elementsToCheck.forEach(selector => {
+                    const elements = document.querySelectorAll(selector);
+                    console.log(`\n${selector}:`);
+                    
+                    if (elements.length === 0) {
+                        console.error('  ❌ No elements found');
+                        return;
+                    }
+                    
+                    elements.forEach((element, index) => {
+                        console.log(`  Element ${index}:`, element.tagName, element.id, element.className);
+                        
+                        // Try to get event listeners
+                        try {
+                            const eventListeners = getEventListeners(element);
+                            const listenerTypes = Object.keys(eventListeners);
+                            
+                            if (listenerTypes.length > 0) {
+                                console.log('  ✅ Event listeners found:');
+                                listenerTypes.forEach(type => {
+                                    console.log(`    - ${type}: ${eventListeners[type].length} listener(s)`);
+                                });
+                            } else {
+                                console.warn('  ❌ No event listeners attached');
+                            }
+                        } catch (e) {
+                            console.warn('  ❓ Could not retrieve event listeners (requires Chrome DevTools)');
+                        }
+                    });
+                });
+
+                console.log('\n=== DEBUG COMPLETE ===');
+            } catch (error) {
+                console.error('Debug failed:', error);
+            }
+
+            runBtn.disabled = false;
+            runBtn.textContent = 'Run Debug';
+        });
+    </script>
+</body>
+</html>

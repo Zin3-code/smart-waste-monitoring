@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .loading {
+            color: #17a2b8;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Auto Login for Smart Waste Monitoring</h1>
+        <div id="status" class="loading">Setting login credentials...</div>
+    </div>
+
+    <script>
+        try {
+            const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiI2OTdmZmM0MWI4MDAwM2IzYjViYjg3YjUiLCJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsImlhdCI6MTc3MzA1MTc3OSwiZXhwIjoxNzczNjU2NTc5fQ.q9y3PbxCOxazy3vc0jZbeuudbxYkCrEck6-NOuD_fws';
+            
+            const user = {
+                id: '697ffc41b80003b3b5bb87b5',
+                name: 'Admin User',
+                email: 'admin@gmail.com',
+                role: 'admin',
+                phone: '+1234567890',
+                gsmNumber: '+1234567890',
+                about: 'SMART CLEAN',
+                tasksCompleted: 0,
+                lastActive: '2026-03-09T10:02:19.274Z'
+            };
+
+            localStorage.setItem('adminAuthToken', token);
+            localStorage.setItem('adminCurrentUser', JSON.stringify(user));
+
+            document.getElementById('status').textContent = 'Login credentials set successfully! Redirecting to dashboard...';
+            document.getElementById('status').className = 'success';
+
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } catch (error) {
+            document.getElementById('status').textContent = 'Error setting login credentials: ' + error.message;
+            document.getElementById('status').className = 'error';
+            console.error('Auto login error:', error);
+        }
+    </script>
+</body>
+</html>

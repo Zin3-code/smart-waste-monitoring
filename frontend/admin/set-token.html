@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Token</title>
+</head>
+<body>
+    <h1>Setting Token...</h1>
+    <script>
+        const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiI2OTdmZmM0MWI4MDAwM2IzYjViYjg3YjUiLCJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsImlhdCI6MTc3MjY4MjAwOCwiZXhwIjoxNzczMjg2ODA4fQ.td4YtQKIn54UMjWxZulrgEqIcfdAxrY2FXFKGTKts0s';
+        const user = {
+            id: '697ffc41b80003b3b5bb87b5',
+            name: 'Admin User',
+            email: 'admin@gmail.com',
+            role: 'admin',
+            phone: '+1234567890',
+            gsmNumber: '+1234567890'
+        };
+
+        localStorage.setItem('adminAuthToken', token);
+        localStorage.setItem('adminCurrentUser', JSON.stringify(user));
+        console.log('Token and user data set');
+        window.location.href = 'index.html';
+    </script>
+</body>
+</html>

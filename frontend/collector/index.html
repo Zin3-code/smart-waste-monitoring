@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Waste Monitoring - Collector Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100'><text y='70' font-size='50' font-family='Arial' font-weight='bold'>Collector</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🗑️ Smart Waste Monitoring</h1>
+                <p>Collector Dashboard - Cantilan Urban Areas</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <p id="loginError" class="error-message"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="dashboard hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>🗑️ Collector Dashboard</h1>
+                <p id="userName">Welcome, Collector</p>
+            </div>
+            <div class="header-right">
+                <div class="notification-menu" id="notificationMenu">
+                    <button id="notificationToggle" class="notification-bell" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="notificationDropdown">
+                        <span class="icon">&#128276;</span>
+                        <span id="notificationCount" class="notification-count hidden">0</span>
+                    </button>
+                    <div id="notificationDropdown" class="notification-dropdown hidden" aria-label="Notifications">
+                        <div class="notification-header">
+                            <span>Notifications</span>
+                            <button id="notificationViewTasks" class="notification-action" type="button">View tasks</button>
+                        </div>
+                        <div id="notificationList" class="notification-list"></div>
+                    </div>
+                </div>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="profileToggle" class="profile-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="profileDropdown">
+                        <span id="profileAvatar" class="profile-avatar">
+                            <img id="profilePhotoSmall" alt="Profile photo">
+                            <span id="profileInitials" class="profile-initials">CU</span>
+                        </span>
+                        <span class="profile-labels">
+                            <span id="profileMenuName" class="profile-name">Collector</span>
+                            <span id="profileMenuRole" class="profile-role">Collector</span>
+                        </span>
+                        <span class="profile-caret" aria-hidden="true">&#9662;</span>
+                    </button>
+                    <div id="profileDropdown" class="profile-dropdown hidden" aria-label="Profile menu">
+                        <div class="profile-summary">
+                            <span id="profileAvatarLarge" class="profile-avatar large">
+                                <img id="profilePhotoLarge" alt="Profile photo">
+                                <span id="profileInitialsLarge" class="profile-initials">CU</span>
+                            </span>
+                            <div class="profile-details">
+                                <div id="profileMenuDropdownName" class="profile-dropdown-name">Collector</div>
+                                <div id="profileMenuEmail" class="profile-email">collector@gmail.com</div>
+                                <div id="profileMenuAbout" class="profile-about">No bio added</div>
+                            </div>
+                        </div>
+                        <div class="profile-actions">
+                            <button id="profileViewBtn" class="profile-action" type="button">My Profile</button>
+                            <button id="profileLogoutBtn" class="profile-action danger" type="button">Logout</button>
+                        </div>
+                    </div>
+                </div>
+                <label class="theme-switch" title="Toggle dark mode">
+                    <input id="themeToggle" type="checkbox" aria-label="Toggle dark mode">
+                    <span class="theme-slider">
+                        <span class="theme-icon sun" aria-hidden="true">&#9728;</span>
+                        <span class="theme-icon moon" aria-hidden="true">&#127769;</span>
+                    </span>
+                </label>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-content">
+                        <h3 id="pendingTasks">0</h3>
+                        <p>Pending Tasks</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔄</div>
+                    <div class="stat-content">
+                        <h3 id="inProgressTasks">0</h3>
+                        <p>In Progress</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <h3 id="completedTasks">0</h3>
+                        <p>Completed Today</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <h3 id="totalCompleted">0</h3>
+                        <p>Total Completed</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="tasks">My Tasks</button>
+                <button class="tab-btn" data-tab="history">History</button>
+                <button class="tab-btn" data-tab="profile">Profile</button>
+            </div>
+
+            <!-- Tasks Tab -->
+            <div id="tasksTab" class="tab-content active">
+                <div class="section-header">
+                    <h2>Assigned Tasks</h2>
+                    <select id="taskStatusFilter" class="filter-select" aria-label="Task status filter" title="Task status filter">
+                        <option value="">All Tasks</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div id="tasksList" class="tasks-list"></div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="historyTab" class="tab-content">
+                <div class="section-header">
+                    <h2>Task History</h2>
+                </div>
+                <div id="historyList" class="history-list"></div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profileTab" class="tab-content">
+                <div class="profile-container">
+                    <div class="profile-card">
+                        <h2>My Profile</h2>
+                        <form id="profileForm" class="profile-form">
+                            <div class="form-group">
+                                <label for="profilePhotoInput">Profile Photo</label>
+                                <div class="profile-photo-field">
+                                    <div class="profile-photo-preview" id="profilePhotoPreview">
+                                        <img id="profilePhotoPreviewImg" alt="Profile preview">
+                                        <span id="profilePhotoPreviewInitials" class="profile-initials">CU</span>
+                                    </div>
+                                    <input type="file" id="profilePhotoInput" accept="image/*" aria-label="Upload profile photo">
+                                    <div class="profile-photo-actions">
+                                        <button type="button" id="profilePhotoRemove" class="btn btn-secondary btn-sm">Remove Photo</button>
+                                    </div>
+                                    <span class="form-help-text">Use a JPG or PNG up to 2MB.</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="profileName">Name</label>
+                                <input type="text" id="profileName" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="profileEmail">Email</label>
+                                <input type="email" id="profileEmail" name="email" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label for="profilePhone">Phone</label>
+                                <input type="text" id="profilePhone" name="phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="profileGsmNumber">GSM Number</label>
+                                <input type="text" id="profileGsmNumber" name="gsmNumber" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="profileAbout">About</label>
+                                <textarea id="profileAbout" name="about" rows="3" maxlength="300" placeholder="Add a short bio..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Profile</button>
+                        </form>
+                    </div>
+                    
+                    <div class="performance-card">
+                        <h2>Performance Summary</h2>
+                        <div class="performance-stats">
+                            <div class="performance-item">
+                                <span class="label">Total Tasks Completed:</span>
+                                <span class="value" id="perfTotalTasks">0</span>
+                            </div>
+                            <div class="performance-item">
+                                <span class="label">Average Duration:</span>
+                                <span class="value" id="perfAvgDuration">0 min</span>
+                            </div>
+                            <div class="performance-item">
+                                <span class="label">Completion Rate:</span>
+                                <span class="value" id="perfCompletionRate">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active" data-tab="tasks">
+                <span class="icon">📋</span>
+                <span>Tasks</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="history">
+                <span class="icon">📜</span>
+                <span>History</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="profile">
+                <span class="icon">👤</span>
+                <span>Profile</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Task Details Modal -->
+    <div id="taskDetailsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Task Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="taskDetailsContent"></div>
+        </div>
+    </div>
+
+    <!-- Complete Task Modal -->
+    <div id="completeTaskModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Complete Task</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="completeTaskForm" class="modal-body">
+                <input type="hidden" id="completeTaskId">
+                <div class="form-group">
+                    <label for="completionNotes">Notes (Optional)</label>
+                    <textarea id="completionNotes" name="notes" rows="3" placeholder="Any notes about this collection..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="issueReported">Report Issue (Optional)</label>
+                    <textarea id="issueReported" name="issueReported" rows="2" placeholder="Any issues encountered..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-success">Complete Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Issue Modal -->
+    <div id="reportIssueModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Report Issue</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="reportIssueForm" class="modal-body">
+                <input type="hidden" id="issueTaskId">
+                <div class="form-group">
+                    <label for="issueType">Issue Type</label>
+                    <select id="issueType" name="issueType" required>
+                        <option value="">Select issue type</option>
+                        <option value="access">Access Problem</option>
+                        <option value="bin-damaged">Bin Damaged</option>
+                        <option value="overflow">Bin Overflow</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="issueDescription">Description</label>
+                    <textarea id="issueDescription" name="description" rows="4" required placeholder="Describe the issue..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Report Issue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div id="modalOverlay" class="modal-overlay hidden"></div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="auth-gate.js"></script>
+    <script src="app.js"></script>
+    <!-- Debug: Check CSS computed styles -->
+    <script>
+        (function() {
+            console.log('=== CSS Debug Info ===');
+            const header = document.querySelector('.header');
+            const mainContent = document.querySelector('.main-content');
+            const body = document.body;
+            
+            if (header) {
+                const headerStyles = window.getComputedStyle(header);
+                console.log('Header position:', headerStyles.position);
+                console.log('Header margin:', headerStyles.margin);
+                console.log('Header padding:', headerStyles.padding);
+                console.log('Header display:', headerStyles.display);
+            }
+            
+            if (mainContent) {
+                const mainStyles = window.getComputedStyle(mainContent);
+                console.log('Main content padding:', mainStyles.padding);
+                console.log('Main content margin:', mainStyles.margin);
+            }
+            
+            if (body) {
+                const bodyStyles = window.getComputedStyle(body);
+                console.log('Body font-family:', bodyStyles.fontFamily);
+                console.log('Body background:', bodyStyles.background);
+            }
+            
+            // Check CSS variables
+            const root = document.documentElement;
+            const computedStyle = getComputedStyle(root);
+            console.log('--primary-color:', computedStyle.getPropertyValue('--primary-color').trim());
+            console.log('--secondary-color:', computedStyle.getPropertyValue('--secondary-color').trim());
+            console.log('--page-bg:', computedStyle.getPropertyValue('--page-bg').trim());
+            console.log('=====================');
+        })();
+    </script>
+</body>
+</html>
