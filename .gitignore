@@ -62,7 +62,7 @@ db/
 # OS
 Thumbs.db
 
-#git ignore
+#git ignore 
 backend/serviceAccountKey.json
 .env
 node_modules

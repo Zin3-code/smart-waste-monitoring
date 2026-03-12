@@ -6,8 +6,8 @@
 #define WIFI_PASSWORD "AiahZiahCoco"
 
 // SERVER
-#define SERVER_HOST "192.168.1.33"
-#define SERVER_PORT 5000
+#define SERVER_HOST "smart-waste-monitoring-api.onrender.com"
+#define SERVER_PORT 80
 
 // DEVICE
 #define BIN_ID "BIN-ml5uhmt0-e4ec80ef"
