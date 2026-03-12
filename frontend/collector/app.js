@@ -1,6 +1,6 @@
 // API Configuration
+// API Configuration
 const API_BASE_URL = "https://smart-waste-monitoring-api.onrender.com/api";
-
 // Global State
 let currentUser = null;
 let authToken = null;
@@ -40,7 +40,15 @@ function toggleTheme() {
     applyTheme(current === 'dark' ? 'light' : 'dark');
 }
 
-function getInitials(name = '') {
+/*************  ✨ Windsurf Command ⭐  *************/
+/**
+ * Returns the initials of a given name.
+ * If the name is empty, returns 'U'.
+ * Otherwise, returns the first letter of the first word and the first letter of the last word, concatenated and uppercased.
+ * @param {string} [name] - The name to get the initials of.
+ * @returns {string} The initials of the given name, or 'U' if the name is empty.
+ */
+/*******  277f5b54-792a-4f62-b822-cb6e0516f6e8  *******/function getInitials(name = '') {
     const parts = name.trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) return 'U';
     const first = parts[0][0];
@@ -556,8 +564,7 @@ function loadTabData(tab) {
 
 // Initialize Socket
 function initializeSocket() {
-    socket = io('http://localhost:5000');
-    
+socket = io('https://smart-waste-monitoring-api.onrender.com');    
     socket.on('connect', () => {
         console.log('Connected to server');
         socket.emit('join', { role: currentUser.role, userId: currentUser.id });

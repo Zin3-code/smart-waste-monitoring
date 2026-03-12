@@ -877,8 +877,7 @@ function loadSectionData(section) {
 
 // Initialize Socket
 function initializeSocket() {
-    socket = io('http://localhost:5000');
-    
+socket = io('https://smart-waste-monitoring-api.onrender.com');    
     socket.on('connect', () => {
         console.log('Connected to server');
         socket.emit('join', { role: currentUser.role, userId: currentUser.id });
