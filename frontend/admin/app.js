@@ -1483,6 +1483,17 @@ async function loadUsers() {
     }
 }
 
+  // 🔒 ADMIN CHECK
+  if (user.role !== "admin") {
+    alert("Access denied. Admins only.");
+    localStorage.removeItem("token");
+    window.location.href = "../login.html";
+    return;
+  }
+
+  document.getElementById("userName").innerText = user.name;
+
+
 // Render Users
 function renderUsers(users) {
     const usersTable = document.getElementById('usersTable');

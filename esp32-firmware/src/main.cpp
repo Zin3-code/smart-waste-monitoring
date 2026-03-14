@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <HardwareSerial.h>
@@ -164,16 +165,16 @@ void sendUpdateToServer(int distance){
     return;
   }
 
-  // Debug network details
   debugPrint("ESP32 IP: " + WiFi.localIP().toString());
   debugPrint("Server: " + String(SERVER_HOST) + ":" + String(SERVER_PORT));
 
+  WiFiClientSecure client;
+  client.setInsecure();
+
   HTTPClient http;
 
-  String url = "http://";
+  String url = "https://";
   url += SERVER_HOST;
-  url += ":";
-  url += SERVER_PORT;
   url += "/api/bins/iot/update";
 
   StaticJsonDocument<200> doc;
@@ -187,17 +188,17 @@ void sendUpdateToServer(int distance){
   debugPrint("URL: " + url);
   debugPrint("Payload: " + payload);
 
-  http.begin(url);
+  http.begin(client, url);
   http.addHeader("Content-Type","application/json");
 
   int code = http.POST(payload);
 
   debugPrint("HTTP Code: " + String(code));
 
-  // Print error details if request failed
   if(code == -1){
     debugPrint("Error: " + http.errorToString(code));
-  } else if(code >= 400){
+  } 
+  else if(code >= 400){
     String response = http.getString();
     debugPrint("Response: " + response);
   }

@@ -125,6 +125,11 @@
                     resultDiv.className = 'result error';
                     button.textContent = 'Login Failed';
                 }
+                    if (data.user.role === "admin") {
+                     window.location.href = "/admin/index.html";
+                    } else {   
+                     window.location.href = "/collector/index.html";
+                    }
             } catch (error) {
                 resultDiv.textContent = 'Error: ' + error.message;
                 resultDiv.className = 'result error';

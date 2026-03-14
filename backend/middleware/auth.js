@@ -2,21 +2,26 @@ const firebaseAuthService = require('../services/firebaseAuthService');
 const firebaseUserService = require('../services/firebaseUserService');
 const jwt = require('jsonwebtoken');
 
+/* ===============================
+   PROTECT ROUTES (AUTH CHECK)
+================================ */
+
 exports.protect = async (req, res, next) => {
 
   let token;
 
-  // Check Authorization header OR cookie
+  // 1️⃣ Get token from Authorization header or cookie
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
-  } else if (req.cookies && req.cookies.token) {
+  } 
+  else if (req.cookies && req.cookies.token) {
     token = req.cookies.token;
   }
 
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: "Not authorized"
+      message: "Not authorized. No token provided."
     });
   }
 
@@ -24,18 +29,25 @@ exports.protect = async (req, res, next) => {
 
     let decoded;
 
-    // Try custom JWT first
+    /* ===============================
+       TRY VERIFYING CUSTOM JWT
+    ================================ */
+
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("Successfully verified custom JWT:", decoded);
-    }
+      console.log("Custom JWT verified:", decoded);
+    } 
     catch (jwtError) {
-      console.error("JWT verification error:", jwtError);
 
-      // Try Firebase token
+      console.log("Custom JWT failed. Trying Firebase token...");
+
+      /* ===============================
+         TRY VERIFYING FIREBASE TOKEN
+      ================================ */
+
       try {
+
         const { decodedToken, user } = await firebaseAuthService.verifyIdToken(token);
-        console.log("Successfully verified Firebase token:", decodedToken);
 
         if (!decodedToken || !decodedToken.uid) {
           return res.status(401).json({
@@ -44,11 +56,19 @@ exports.protect = async (req, res, next) => {
           });
         }
 
-        req.user = user;
+        req.user = {
+          id: user.uid,
+          uid: user.uid,
+          email: user.email,
+          role: user.role
+        };
 
         return next();
+
       } catch (firebaseError) {
+
         console.error("Firebase token verification error:", firebaseError);
+
         return res.status(401).json({
           success: false,
           message: "Token verification failed"
@@ -56,7 +76,10 @@ exports.protect = async (req, res, next) => {
       }
     }
 
-    // Extract UID safely
+    /* ===============================
+       GET USER FROM FIRESTORE
+    ================================ */
+
     const uid = decoded.uid || decoded.id || decoded.userId;
 
     if (!uid) {
@@ -78,9 +101,13 @@ exports.protect = async (req, res, next) => {
     if (user.isActive === false) {
       return res.status(401).json({
         success: false,
-        message: "User disabled"
+        message: "User account disabled"
       });
     }
+
+    /* ===============================
+       ATTACH USER TO REQUEST
+    ================================ */
 
     req.user = {
       id: user.uid,
@@ -91,8 +118,7 @@ exports.protect = async (req, res, next) => {
 
     next();
 
-  }
-  catch (error) {
+  } catch (error) {
 
     console.error("Auth middleware error:", error);
 
@@ -103,6 +129,10 @@ exports.protect = async (req, res, next) => {
   }
 };
 
+
+/* ===============================
+   ROLE AUTHORIZATION
+================================ */
 
 exports.authorize = (...roles) => {
 
@@ -118,11 +148,10 @@ exports.authorize = (...roles) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: "Access denied"
+        message: "Access denied. Insufficient permissions."
       });
     }
 
     next();
   };
-
 };
