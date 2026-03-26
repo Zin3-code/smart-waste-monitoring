@@ -3,8 +3,8 @@
 
 /* ---------------- WIFI ---------------- */
 
-#define WIFI_SSID "Chachab"
-#define WIFI_PASSWORD "chab012219"
+#define WIFI_SSID "AZC BoardingHouse 2.4G"
+#define WIFI_PASSWORD "AiahZiahCoco"
 
 
 /* ---------------- SERVER ---------------- */

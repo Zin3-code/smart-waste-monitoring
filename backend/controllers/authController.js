@@ -1,6 +1,8 @@
 const firebaseUserService = require('../services/firebaseUserService');
 const jwt = require('jsonwebtoken');
 
+const bcrypt = require('bcryptjs');
+
 // ================= REGISTER =================
 // @desc Register a new user
 // @route POST /api/auth/register
@@ -55,12 +57,12 @@ exports.register = async (req, res) => {
 // @route POST /api/auth/login
 exports.login = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, password } = req.body;
 
-    if (!email) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Please provide email"
+        message: "Please provide email and password"
       });
     }
 
@@ -81,6 +83,25 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Validate password
+    let isPasswordValid = false;
+
+    // Check if user has a password field (legacy users)
+    if (user.password) {
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    } else {
+      // For Firebase users without passwords, allow login with default password
+      // This is temporary - in production, users should reset their passwords
+      isPasswordValid = password === 'password123';
+    }
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials"
+      });
+    }
+
     // Update last active
     await firebaseUserService.updateLastActive(user.uid);
 
@@ -98,14 +119,19 @@ exports.login = async (req, res) => {
     res.status(200).json({
       success: true,
       token,
-      user
+      user: {
+        id: user.uid,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
 
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: "Login failed"
     });
   }
 };

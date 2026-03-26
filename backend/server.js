@@ -230,12 +230,76 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, "0.0.0.0", async () => {
 
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
 
+  // Ensure admin user exists
+  try {
+    await ensureAdminUser();
+  } catch (error) {
+    console.error('Error ensuring admin user exists:', error);
+  }
+
+  // Start background process to check for stale bins every 5 minutes
+  const { FirebaseBinService } = require('./services/firebaseBinService');
+  setInterval(async () => {
+    try {
+      console.log('Running stale bin check...');
+      const staleBins = await FirebaseBinService.checkAndUpdateStaleBins(5); // 5 minute threshold
+      if (staleBins.length > 0) {
+        console.log(`Marked ${staleBins.length} bins as offline due to inactivity`);
+        // Emit socket event to notify admins of offline bins
+        const io = require('./server').io;
+        if (io) {
+          io.to("admin").emit("stale-bins-detected", { count: staleBins.length, binIds: staleBins });
+        }
+      }
+    } catch (error) {
+      console.error('Error in stale bin check:', error);
+    }
+  }, 5 * 60 * 1000); // Run every 5 minutes
+
 });
+
+// Function to ensure admin user exists
+async function ensureAdminUser() {
+  try {
+    console.log('🔍 Checking for admin user...');
+    const firebaseUserService = require('./services/firebaseUserService');
+    const bcrypt = require('bcryptjs');
+
+    // Check if admin user exists
+    const existingAdmin = await firebaseUserService.getUserByEmail('admin@gmail.com');
+
+    if (!existingAdmin) {
+      console.log('📝 Admin user not found, creating...');
+
+      // Hash the password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash('password123', salt);
+
+      // Create admin user
+      const adminUser = await firebaseUserService.createUser({
+        email: 'admin@gmail.com',
+        password: hashedPassword, // This will be stored in Firestore
+        name: 'Administrator',
+        role: 'admin',
+        phone: '+1234567890',
+        gsmNumber: '+1234567890'
+      });
+
+      console.log('✅ Admin user created successfully with ID:', adminUser.uid);
+    } else {
+      console.log('✅ Admin user already exists with ID:', existingAdmin.uid);
+    }
+  } catch (error) {
+    console.error('❌ Error in ensureAdminUser:', error.message);
+    console.error('Stack:', error.stack);
+    // Don't throw - allow server to continue
+  }
+}
 
 
 module.exports = { app, io };

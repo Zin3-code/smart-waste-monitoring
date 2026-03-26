@@ -375,17 +375,23 @@ class FirebaseBinService {
     try {
       const bins = await this.getAllBins();
       
+      // Automatically check for stale bins and update offline status
+      await this.checkAndUpdateStaleBins();
+      
+      // Refresh bins list after potential updates
+      const updatedBins = await this.getAllBins();
+      
       const stats = {
-        total: bins.length,
-        online: bins.filter(b => b.isOnline).length,
-        offline: bins.filter(b => !b.isOnline).length,
-        empty: bins.filter(b => b.isOnline && b.status === 'empty').length,
-        medium: bins.filter(b => b.isOnline && b.status === 'medium').length,
-        full: bins.filter(b => b.isOnline && b.status === 'full').length,
+        total: updatedBins.length,
+        online: updatedBins.filter(b => b.isOnline).length,
+        offline: updatedBins.filter(b => !b.isOnline).length,
+        empty: updatedBins.filter(b => b.isOnline && b.status === 'empty').length,
+        medium: updatedBins.filter(b => b.isOnline && b.status === 'medium').length,
+        full: updatedBins.filter(b => b.isOnline && b.status === 'full').length,
         averageFillLevel: 0,
       };
       
-      const onlineBins = bins.filter(b => b.isOnline);
+      const onlineBins = updatedBins.filter(b => b.isOnline);
       if (onlineBins.length > 0) {
         stats.averageFillLevel = Math.round(
           onlineBins.reduce((sum, b) => sum + b.currentLevel, 0) / onlineBins.length
@@ -395,6 +401,37 @@ class FirebaseBinService {
       return stats;
     } catch (error) {
       console.error('Error getting bin stats:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Check for bins that haven't been seen within the threshold and mark them as offline
+   * @param {number} thresholdMinutes - Minutes of no activity before considering bin offline (default: 5)
+   * @returns {Promise<Array>} Array of bin IDs that were marked as offline
+   */
+  static async checkAndUpdateStaleBins(thresholdMinutes = 5) {
+    try {
+      const bins = await this.getAllBins();
+      const thresholdMs = thresholdMinutes * 60 * 1000;
+      const now = new Date();
+      const staleBins = [];
+      
+      for (const bin of bins) {
+        const lastSeen = new Date(bin.lastSeen);
+        const timeSinceLastSeen = now - lastSeen;
+        
+        // If bin is currently online but hasn't been seen within threshold, mark as offline
+        if (bin.isOnline && timeSinceLastSeen > thresholdMs) {
+          await this.updateOnlineStatus(bin.id, false);
+          staleBins.push(bin.id);
+          console.log(`Bin ${bin.binId} (ID: ${bin.id}) marked as offline due to no activity for ${thresholdMinutes}+ minutes`);
+        }
+      }
+      
+      return staleBins;
+    } catch (error) {
+      console.error('Error checking for stale bins:', error);
       throw error;
     }
   }
