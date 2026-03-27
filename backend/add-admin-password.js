@@ -1,3 +1,4 @@
+require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const { db, COLLECTIONS } = require('./config/firebase');
 const PORT = process.env.PORT || 5000;

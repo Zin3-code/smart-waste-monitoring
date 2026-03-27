@@ -1,4 +1,5 @@
 // Debug script to test event listeners
+console.log('[debug-event-listeners.js] Loading debug-event-listeners.js...');
 document.addEventListener('DOMContentLoaded', () => {
     console.log('=== DEBUG EVENT LISTENERS ===');
 

@@ -1,5 +1,21 @@
 // Authentication Gate - Store return URL before checking auth
+console.log('[auth-gate.js] Loading auth-gate.js...');
+
+// Fix: Clear URL parameters that might be injected by password managers
+// This prevents "Illegal return statement" errors from extensions
+if (window.location.search && window.location.search.includes('password')) {
+    // Clear the search params from URL without reloading if possible
+    try {
+        const cleanUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+        console.log('[auth-gate.js] Cleared password parameters from URL');
+    } catch (e) {
+        console.log('[auth-gate.js] Could not clear URL params:', e);
+    }
+}
+
 function storeReturnUrl() {
+    console.log('[auth-gate.js] storeReturnUrl called');
     const currentPath = window.location.pathname + window.location.search;
     // Only store if not already on login page and has a meaningful path
     if (currentPath && currentPath !== '/' && !currentPath.includes('index.html')) {

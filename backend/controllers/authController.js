@@ -59,7 +59,10 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log(`[AUTH] Login attempt for email: ${email}`);
+
     if (!email || !password) {
+      console.log("[AUTH] Missing email or password");
       return res.status(400).json({
         success: false,
         message: "Please provide email and password"
@@ -68,15 +71,20 @@ exports.login = async (req, res) => {
 
     // Get user from Firestore
     const user = await firebaseUserService.getUserByEmail(email);
+    console.log(`[AUTH] User lookup result: ${user ? 'Found' : 'Not found'}`);
 
     if (!user) {
+      console.log("[AUTH] User not found");
       return res.status(401).json({
         success: false,
         message: "Invalid credentials"
       });
     }
 
+    console.log(`[AUTH] User data: id=${user.uid}, email=${user.email}, role=${user.role}, isActive=${user.isActive}, hasPassword=${!!user.password}`);
+
     if (user.isActive === false) {
+      console.log("[AUTH] Account is deactivated");
       return res.status(401).json({
         success: false,
         message: "Account is deactivated"
@@ -88,14 +96,19 @@ exports.login = async (req, res) => {
 
     // Check if user has a password field (legacy users)
     if (user.password) {
+      console.log("[AUTH] Comparing password with bcrypt");
       isPasswordValid = await bcrypt.compare(password, user.password);
     } else {
       // For Firebase users without passwords, allow login with default password
       // This is temporary - in production, users should reset their passwords
+      console.log("[AUTH] Using default password check");
       isPasswordValid = password === 'password123';
     }
 
+    console.log(`[AUTH] Password validation result: ${isPasswordValid}`);
+
     if (!isPasswordValid) {
+      console.log("[AUTH] Invalid password");
       return res.status(401).json({
         success: false,
         message: "Invalid credentials"
@@ -103,9 +116,11 @@ exports.login = async (req, res) => {
     }
 
     // Update last active
+    console.log("[AUTH] Updating last active");
     await firebaseUserService.updateLastActive(user.uid);
 
     // Generate JWT
+    console.log("[AUTH] Generating JWT token");
     const token = jwt.sign(
       {
         uid: user.uid,
@@ -116,6 +131,7 @@ exports.login = async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE || "7d" }
     );
 
+    console.log("[AUTH] Login successful");
     res.status(200).json({
       success: true,
       token,
@@ -128,7 +144,7 @@ exports.login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("[AUTH] Login error:", error);
     res.status(500).json({
       success: false,
       message: "Login failed"

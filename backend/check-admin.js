@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { db, COLLECTIONS } = require('./config/firebase');
 
 async function checkAdmin() {
